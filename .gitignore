@@ -10,13 +10,5 @@ env/
 # --- Segredos e Credenciais (MUITO IMPORTANTE) ---
 .env
 
-# --- Logs e PM2 ---
-logs/*.log
-*.log
-pm2.log
-
-# --- Node.js (caso utilize dependências locais do Node) ---
-node_modules/
-
 # --- Streamlit ---
 .streamlit/secrets.toml
