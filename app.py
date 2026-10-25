@@ -81,14 +81,14 @@ st.sidebar.subheader("🕹️ Controlo Manual de Workers")
 
 if st.sidebar.button("🚀 Executar Market Bot Agora"):
     # Certifique-se de usar .yml ou .yaml conforme o ficheiro criado no repositório
-    success, msg = disparar_github_workflow("market_worker.yml")
+    success, msg = disparar_github_workflow("market_worker.yaml")
     if success:
         st.sidebar.success(msg)
     else:
         st.sidebar.error(msg)
 
 if st.sidebar.button("🔍 Executar Discovery Bot Agora"):
-    success, msg = disparar_github_workflow("discovery_worker.yml")
+    success, msg = disparar_github_workflow("discovery_worker.yaml")
     if success:
         st.sidebar.success(msg)
     else:
