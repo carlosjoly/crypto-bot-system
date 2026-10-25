@@ -1,0 +1,47 @@
+name: Discovery Bot Worker
+
+on:
+  schedule:
+    - cron: '0 */4 * * *' # Executa a cada 4 horas[cite: 3]
+  workflow_dispatch:
+
+jobs:
+  run-discovery-bot:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout do Repositório
+        uses: actions/checkout@v4[cite: 3]
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5[cite: 3]
+        with:
+          python-version: '3.10'[cite: 3]
+
+      - name: Instalar Dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt[cite: 3]
+
+      - name: Garantir pasta de logs
+        run: mkdir -p logs[cite: 3]
+
+      - name: Executar Bot de Descoberta
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python src/bot_descoberta.py | tee -a logs/system.log[cite: 3]
+
+      - name: Sincronizar Repositório (Pull & Rebase)
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull origin main --rebase
+
+      - name: Commitar Logs de Descoberta
+        uses: stefanzweifel/git-auto-commit-action@v5[cite: 3]
+        with:
+          commit_message: "chore(discovery): atualização automática de logs [skip ci]"[cite: 3]
+          branch: main[cite: 3]
