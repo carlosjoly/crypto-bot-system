@@ -1,4 +1,4 @@
 streamlit
 pandas
 requests
-ccxt
+ccxt>=4.0.0
