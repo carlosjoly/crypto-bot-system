@@ -47,7 +47,7 @@ def executar_descoberta_dinamica():
             'enableRateLimit': True,
         })
         
-        markets = exchange.fetch_markets()[cite: 1]
+        markets = exchange.fetch_markets()
         
         # Filtra apenas pares ativos em USDT
         pares_usdt = [m for m in markets if m['quote'] == 'USDT' and m['active']]
