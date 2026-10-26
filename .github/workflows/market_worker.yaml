@@ -2,14 +2,12 @@ name: Market Bot Worker
 
 on:
   schedule:
-    - cron: '*/10 * * * *' # Executa a cada 10 minutos
+    - cron: '*/15 * * * *' # Executa a cada 15 minutos
   workflow_dispatch:
 
 jobs:
   run-market-bot:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout do Repositório
@@ -25,22 +23,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Garantir pasta de logs
-        run: mkdir -p logs
-
       - name: Executar Bot de Mercado
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python src/bot_mercado.py | tee -a logs/system.log
+        run: python src/bot_mercado.py | tee system.log
 
-      - name: Commitar e Enviar Logs com Segurança
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          
-          git add logs/system.log
-          git commit -m "chore(market): atualização automática de logs [skip ci]" || echo "Nenhuma alteração para commitar"
-          
-          git pull origin main --rebase --autostash
-          git push origin main
+      - name: Upload de Logs como Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: system-log-${{ github.run_id }}
+          path: system.log
+          retention-days: 7
