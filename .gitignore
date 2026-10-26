@@ -12,3 +12,7 @@ env/
 
 # --- Streamlit ---
 .streamlit/secrets.toml
+
+# Logs de execução
+logs/
+system.log
