@@ -2,14 +2,12 @@ name: Discovery Bot Worker
 
 on:
   schedule:
-    - cron: '0 */4 * * *'
+    - cron: '0 */4 * * *' # Executa a cada 4 horas
   workflow_dispatch:
 
 jobs:
   run-discovery-bot:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout do Repositório
@@ -32,15 +30,11 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python src/bot_descoberta.py | tee -a logs/system.log
+        run: python src/bot_descoberta.py | tee logs/system.log
 
-      - name: Commitar e Enviar Logs com Segurança
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          
-          git add logs/system.log
-          git commit -m "chore(discovery): atualização automática de logs [skip ci]" || echo "Nenhuma alteração para commitar"
-          
-          git pull origin main --rebase --autostash
-          git push origin main
+      - name: Upload de Logs como Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: discovery-log-${{ github.run_id }}
+          path: logs/system.log
+          retention-days: 7
