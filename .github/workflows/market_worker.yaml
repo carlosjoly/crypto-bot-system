@@ -2,7 +2,7 @@ name: Market Bot Worker
 
 on:
   schedule:
-    - cron: '*/03 * * * *' # Executa a cada 15 minutos '*/15 * * * *'
+    - cron: '*/10 * * * *' # Executa a cada 10 minutos 
   workflow_dispatch:
 
 jobs:
