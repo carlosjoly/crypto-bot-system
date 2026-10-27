@@ -1,56 +1,34 @@
-import ccxt
-import pandas as pd
-from datetime import datetime
-import sys
-import os
+# Atualização na estrutura do bot_mercado.py
+exchange = ccxt.kucoin({
+    'enableRateLimit': True,
+})
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from utils.telegram_alerter import enviar_alerta_telegram
+markets = exchange.fetch_markets()
+pares_alvo = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'BNB/USDT', 'ADA/USDT']
 
-def executar_analise_mercado():
-    print("[{}] Executando varredura do Bot de Mercado (via CoinGecko)...".format(datetime.now()))
+for simbolo in pares_alvo:
+    ticker = exchange.fetch_ticker(simbolo)
+    preco_atual = ticker.get('last', 0)
+    variacao = ticker.get('percentage', 0) or 0
     
-    # Utiliza a CoinGecko para evitar bloqueios de IP (Erro 451) em servidores de nuvem
-    exchange = ccxt.coingecko({
-        'enableRateLimit': True,
-    })
-    
-    # Mapeamento de símbolos compatíveis com a CoinGecko no CCXT
-    symbols_map = {
-        'BTC/USDT': 'bitcoin/usdt',
-        'ETH/USDT': 'ethereum/usdt',
-        'SOL/USDT': 'solana/usdt',
-        'BNB/USDT': 'binancecoin/usdt',
-        'ADA/USDT': 'cardano/usdt',
-        'XRP/USDT': 'ripple/usdt',
-        'AVAX/USDT': 'avalanche-2/usdt'
-    }
-    
-    for symbol, cg_id in symbols_map.items():
-        try:
-            # Como a Coingecko fornece dados agregados, buscamos o ticker atual
-            ticker = exchange.fetch_ticker(cg_id)
-            preco_atual = ticker.get('last', 0)
-            variacao = ticker.get('percentage', 0) or 0 # Variação de 24h na Coingecko
-            
-            print(f"Ativo: {symbol} | Preço: {preco_atual} | Variação 24h: {variacao}%")
-            
-            # Condição de alerta (ajustada para variação percentual disponível)
-            if abs(variacao) >= 3.0: # Limiar de 3% no acumulado para exemplo
-                tipo_movimento = "🚀 ALTA EXPRESSIVA (24h)" if variacao > 0 else "🔻 QUEDA EXPRESSIVA (24h)"
-                mensagem = (
-                    f"*{tipo_movimento} (Bot de Mercado)*\n\n"
-                    f"• *Par:* `{symbol}`\n"
-                    f"• *Preço Atual:* `{preco_atual}`\n"
-                    f"• *Variação:* `{variacao:.2f}%`\n"
-                    f"• *Horário:* `{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`\n\n"
-                    f"_Fonte: CoinGecko API (Cloud-friendly)_"
-                )
-                enviar_alerta_telegram(mensagem)
-                print(f"Alerta enviado para {symbol}: variação de {variacao:.2f}%")
-                
-        except Exception as e:
-            print(f"[Erro ao analisar {symbol} via CoinGecko]: {e}")
-
-if __name__ == "__main__":
-    executar_analise_mercado()
+    if abs(variacao) >= 3.0:
+        # Cálculo do plano de execução via ATR nas velas de 4h
+        ohlcv = exchange.fetch_ohlcv(simbolo, timeframe='4h', limit=14)
+        amplitudes = [c[2] - c[3] for c in ohlcv]
+        atr = sum(amplitudes) / len(amplitudes) if amplitudes else preco_atual * 0.02
+        
+        plano = calcular_plano_execucao(preco_atual, atr)
+        
+        tipo_movimento = "🚀 ALTA EXPRESSIVA" if variacao > 0 else "🔻 QUEDA EXPRESSIVA"
+        mensagem = (
+            f"*{tipo_movimento} (Bot de Mercado)*\n\n"
+            f"• *Par:* `{symbol}` | *Preço:* `{preco_atual:.4f}`\n"
+            f"• *Variação (24h):* `{variacao:.2f}%`\n\n"
+            f"📋 **Plano de Execução Sugerido:**\n"
+            f"• Entrada: `{preco_atual:.4f}`\n"
+            f"• Stop Loss: `{plano['stop_loss']:.4f}`\n"
+            f"• Alvo 1: `{plano['target_1']:.4f}`\n"
+            f"• Alvo 2: `{plano['target_2']:.4f}`\n"
+            f"• Risco/Retorno: `1:{plano['rr_ratio']:.1f}`"
+        )
+        enviar_alerta_telegram(mensagem)
