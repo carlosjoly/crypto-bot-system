@@ -2,7 +2,7 @@ name: Discovery Bot Worker
 
 on:
   schedule:
-    - cron: '0 */4 * * *' # Executa a cada 4 horas
+    - cron: '*/05 * * * *' # Executa a cada 4 horas '0 */4 * * *'
   workflow_dispatch:
 
 jobs:
